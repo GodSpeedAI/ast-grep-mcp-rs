@@ -1,6 +1,6 @@
 [package]
 name = "ast-grep-mcp"
-version = "0.1.1"
+version = "0.1.2"
 edition = "2021"
 description = "An MCP server providing structural code search via ast-grep"
 license = "MIT"
