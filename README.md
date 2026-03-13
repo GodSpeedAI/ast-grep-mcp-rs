@@ -152,6 +152,28 @@ Add to your Claude Desktop MCP config:
 }
 ```
 
+### VS Code
+
+Add to your VS Code MCP configuration:
+
+```json
+{
+  "mcpServers": {
+    "ast-grep": {
+      "command": "ast-grep-mcp-server",
+      "args": [],
+      "env": {}
+    }
+  }
+}
+```
+
+Common VS Code user settings locations:
+
+- Linux: `~/.config/Code/User/settings.json`
+- macOS: `~/Library/Application Support/Code/User/settings.json`
+- Windows: `%APPDATA%\\Code\\User\\settings.json`
+
 ## CLI Options
 
 - `--config PATH`: path to `sgconfig.yaml`
