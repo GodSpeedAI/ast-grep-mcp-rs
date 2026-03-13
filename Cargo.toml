@@ -4,6 +4,11 @@ version = "0.1.0"
 edition = "2021"
 description = "An MCP server providing structural code search via ast-grep"
 license = "MIT"
+repository = "https://github.com/GodSpeedAI/ast-grep-mcp-rs"
+homepage = "https://github.com/GodSpeedAI/ast-grep-mcp-rs"
+readme = "README.md"
+keywords = ["mcp", "ast-grep", "code-search", "cli"]
+categories = ["command-line-utilities", "development-tools"]
 
 [lib]
 path = "src/lib.rs"

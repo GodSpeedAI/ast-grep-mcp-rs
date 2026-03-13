@@ -1,60 +1,131 @@
-# ast-grep MCP Server
+# ast-grep MCP Server (Rust)
 
-[Model Context Protocol (MCP)](https://modelcontextprotocol.io/) server that provides AI assistants with powerful structural code search capabilities using [ast-grep](https://ast-grep.github.io/).
+Rust implementation of a [Model Context Protocol (MCP)](https://modelcontextprotocol.io/) server that gives AI assistants structural code search via [ast-grep](https://ast-grep.github.io/).
 
-## Overview
+## Upstream Attribution
 
-This MCP server enables AI assistants (like Cursor, Claude Desktop, etc.) to search and analyze codebases using Abstract Syntax Tree (AST) pattern matching rather than simple text-based search. By leveraging ast-grep's structural search capabilities, AI can:
+This repository is a Rust port of [ast-grep/ast-grep-mcp](https://github.com/ast-grep/ast-grep-mcp).
+Original attribution and MIT license notice are preserved in [LICENSE](LICENSE).
 
-- Find code patterns based on syntax structure, not just text matching
-- Search for specific programming constructs (functions, classes, imports, etc.)
-- Write and test complex search rules using YAML configuration
-- Debug and visualize AST structures for better pattern development
+## What This Server Provides
 
-## Prerequisites
+The server exposes four MCP tools:
 
-1. **Install ast-grep**: Follow [ast-grep installation guide](https://ast-grep.github.io/guide/quick-start.html#installation)
-   ```bash
-   # macOS
-   brew install ast-grep
-   nix-shell -p ast-grep
-   cargo install ast-grep --locked
-   ```
+- `dump_syntax_tree`: Inspect syntax tree or pattern structure for debugging rules.
+- `test_match_code_rule`: Test a YAML ast-grep rule against code from stdin.
+- `find_code`: Search a project with an ast-grep pattern.
+- `find_code_by_rule`: Search a project with a full YAML ast-grep rule.
 
-2. **Install Rust**: You need the Rust toolchain (cargo) to build the server.
-   ```bash
-   curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-   ```
+`find_code` and `find_code_by_rule` support:
 
-3. **MCP-compatible client**: Such as Cursor, Claude Desktop, or other MCP clients
+- `output_format`: `text` (default) or `json`
+- `max_results`: optional positive limit for returned matches
+
+## Requirements
+
+1. Install ast-grep CLI (must be available in your `PATH`)
+
+```bash
+# Choose one installation method from ast-grep docs
+brew install ast-grep
+cargo install ast-grep --locked
+```
+
+1. Install Rust toolchain
+
+```bash
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+```
+
+1. Use an MCP-compatible client (Cursor, Claude Desktop, etc.)
 
 ## Installation
 
-1. Clone this repository:
-   ```bash
-   git clone https://github.com/GodSpeedAI/ast-grep-mcp-rs.git
-   cd ast-grep-mcp-rs
-   ```
+### Option 1: Install from crates.io (recommended)
 
-2. Build the server:
-   ```bash
-   cd ast-grep-mcp-rs
-   cargo build --release
-   ```
+```bash
+cargo install ast-grep-mcp
+```
 
-The binary will be located at `ast-grep-mcp-rs/target/release/ast-grep-mcp-server`.
+This installs the executable as:
 
-## Configuration
+```text
+ast-grep-mcp-server
+```
 
-### For Cursor
+### Option 2: Download a prebuilt binary from GitHub Releases
 
-Add to your MCP settings (usually in `.cursor-mcp/settings.json`):
+1. Open the Releases page: <https://github.com/GodSpeedAI/ast-grep-mcp-rs/releases>
+2. Download the archive for your platform.
+3. Extract it and place `ast-grep-mcp-server` (or `ast-grep-mcp-server.exe` on Windows) somewhere in your `PATH`.
+4. Verify checksums with `SHA256SUMS.txt` from the same release.
+
+Release assets are published with names like:
+
+- `ast-grep-mcp-server-vX.Y.Z-x86_64-unknown-linux-gnu.tar.gz`
+- `ast-grep-mcp-server-vX.Y.Z-x86_64-apple-darwin.tar.gz`
+- `ast-grep-mcp-server-vX.Y.Z-aarch64-apple-darwin.tar.gz`
+- `ast-grep-mcp-server-vX.Y.Z-x86_64-pc-windows-msvc.zip`
+- `SHA256SUMS.txt`
+
+Checksum verification example:
+
+```bash
+sha256sum -c SHA256SUMS.txt
+```
+
+## Build
+
+```bash
+git clone https://github.com/GodSpeedAI/ast-grep-mcp-rs.git
+cd ast-grep-mcp-rs
+cargo build --release
+```
+
+Binary path:
+
+```text
+target/release/ast-grep-mcp-server
+```
+
+## Run Locally
+
+Default transport is stdio:
+
+```bash
+cargo run --release
+```
+
+With custom ast-grep config:
+
+```bash
+cargo run --release -- --config /absolute/path/to/sgconfig.yaml
+```
+
+You can also set:
+
+```bash
+export AST_GREP_CONFIG=/absolute/path/to/sgconfig.yaml
+```
+
+## Transport Support
+
+- `stdio`: supported and recommended
+- `sse`: currently not implemented in this Rust port
+
+If you run with `--transport sse`, the server exits with an error telling you to use stdio.
+
+## Client Configuration
+
+### Cursor
+
+Add to your MCP settings:
 
 ```json
 {
   "mcpServers": {
     "ast-grep": {
-      "command": "/absolute/path/to/ast-grep-mcp/ast-grep-mcp-rs/target/release/ast-grep-mcp-server",
+      "command": "/absolute/path/to/ast-grep-mcp-rs/target/release/ast-grep-mcp-server",
       "args": [],
       "env": {}
     }
@@ -62,15 +133,15 @@ Add to your MCP settings (usually in `.cursor-mcp/settings.json`):
 }
 ```
 
-### For Claude Desktop
+### Claude Desktop
 
-Add to your Claude Desktop MCP configuration:
+Add to your Claude Desktop MCP config:
 
 ```json
 {
   "mcpServers": {
     "ast-grep": {
-      "command": "/absolute/path/to/ast-grep-mcp/ast-grep-mcp-rs/target/release/ast-grep-mcp-server",
+      "command": "/absolute/path/to/ast-grep-mcp-rs/target/release/ast-grep-mcp-server",
       "args": [],
       "env": {}
     }
@@ -78,157 +149,81 @@ Add to your Claude Desktop MCP configuration:
 }
 ```
 
-### CLI Arguments
+## CLI Options
 
-- `--config PATH`: Path to `sgconfig.yaml` file.
-- `--transport TYPE`: "stdio" (default) or "sse".
-- `--port PORT`: Port for SSE transport (default: 3101).
+- `--config PATH`: path to `sgconfig.yaml`
+- `--transport {stdio|sse}`: default is `stdio` (sse not implemented)
+- `--port PORT`: parsed but currently only relevant for future SSE support
 
-### Custom ast-grep Configuration
+## Tool Behavior Notes
 
-The MCP server supports using a custom `sgconfig.yaml` file to configure ast-grep behavior.
-See the [ast-grep configuration documentation](https://ast-grep.github.io/guide/project/project-config.html) for details on the config file format.
+- `project_folder` parameters must be absolute paths.
+- `test_match_code_rule` returns an error when no matches are found.
+- For relational rules (`inside`, `has`), add `stopBy: end` to avoid incomplete traversal.
+- Text output is compact (`file:start-end` + matched snippet) to reduce token usage.
 
-You can provide the config file in two ways (in order of precedence):
+## Example Queries for an MCP Client
 
-1. **Command-line argument**: `--config /path/to/sgconfig.yaml`
-2. **Environment variable**: `AST_GREP_CONFIG=/path/to/sgconfig.yaml`
+- Find all Python function definitions in this repo.
+- Find Rust `impl` blocks with pattern matching.
+- Test this ast-grep YAML rule against a code snippet.
+- Dump the CST for this TypeScript snippet.
 
-## Usage
+## Development
 
-This repository includes comprehensive ast-grep rule documentation in [ast-grep.mdc](https://github.com/ast-grep/ast-grep-mcp/blob/main/ast-grep.mdc). The documentation covers all aspects of writing effective ast-grep rules, from simple patterns to complex multi-condition searches.
+Run tests:
 
-You can add it to your cursor rule or Claude.md, and attach it when you need AI agent to create ast-grep rule for you.
-
-The prompt will ask LLM to use MCP to create, verify and improve the rule it creates.
-
-## Features
-
-The server provides four main tools for code analysis:
-
-### 🔍 `dump_syntax_tree`
-Visualize the Abstract Syntax Tree structure of code snippets. Essential for understanding how to write effective search patterns.
-
-**Use cases:**
-- Debug why a pattern isn't matching
-- Understand the AST structure of target code
-- Learn ast-grep pattern syntax
-
-### 🧪 `test_match_code_rule`
-Test ast-grep YAML rules against code snippets before applying them to larger codebases.
-
-**Use cases:**
-- Validate rules work as expected
-- Iterate on rule development
-- Debug complex matching logic
-
-### 🎯 `find_code`
-Search codebases using simple ast-grep patterns for straightforward structural matches.
-
-**Parameters:**
-- `max_results`: Limit number of complete matches returned (default: unlimited)
-- `output_format`: Choose between `"text"` (default, ~75% fewer tokens) or `"json"` (full metadata)
-
-**Text Output Format:**
-```
-Found 2 matches:
-
-path/to/file.py:10-15
-def example_function():
-    # function body
-    return result
-
-path/to/file.py:20-22
-def another_function():
-    pass
+```bash
+cargo test
 ```
 
-**Use cases:**
-- Find function calls with specific patterns
-- Locate variable declarations
-- Search for simple code constructs
+Notes:
 
-### 🚀 `find_code_by_rule`
-Advanced codebase search using complex YAML rules that can express sophisticated matching criteria.
+- Integration tests are skipped automatically when `ast-grep` is not installed.
 
-**Parameters:**
-- `max_results`: Limit number of complete matches returned (default: unlimited)
-- `output_format`: Choose between `"text"` (default, ~75% fewer tokens) or `"json"` (full metadata)
+## Publishing
 
-**Use cases:**
-- Find nested code structures
-- Search with relational constraints (inside, has, precedes, follows)
-- Complex multi-condition searches
+This repository includes a GitHub Actions workflow that runs on tags like `v0.1.0`.
 
+On each tag, it:
 
-## Usage Examples
+1. Builds platform binaries and uploads them to the GitHub Release.
+2. Generates `SHA256SUMS.txt` for release assets.
+3. Publishes the crate to crates.io.
 
-### Basic Pattern Search
+Setup steps (one time):
 
-Use Query:
+1. Create a crates.io API token.
+2. Add it to the repository secrets as `CARGO_REGISTRY_TOKEN`.
 
-> Find all console.log statements
+Release steps:
 
-AI will generate rules like:
+1. Bump `version` in `Cargo.toml`.
+2. Commit and push.
+3. Create and push a version tag:
 
-```yaml
-id: find-console-logs
-language: javascript
-rule:
-  pattern: console.log($$$)
-```
-
-### Complex Rule Example
-
-User Query:
-> Find async functions that use await
-
-AI will generate rules like:
-
-```yaml
-id: async-with-await
-language: javascript
-rule:
-  all:
-    - kind: function_declaration
-    - has:
-        pattern: async
-    - has:
-        pattern: await $EXPR
-        stopBy: end
+```bash
+git tag v0.1.0
+git push origin v0.1.0
 ```
 
 ## Supported Languages
 
-ast-grep supports many programming languages including:
-- JavaScript/TypeScript
-- Python
-- Rust
-- Go
-- Java
-- C/C++
-- C#
-- And many more...
+Built-in language set includes:
 
-For a complete list of built-in supported languages, see the [ast-grep language support documentation](https://ast-grep.github.io/reference/languages.html).
+- bash, c, cpp, csharp, css, elixir, go, haskell, html, java
+- javascript, json, jsx, kotlin, lua, nix, php, python, ruby, rust
+- scala, solidity, swift, tsx, typescript, yaml
 
-You can also add support for custom languages through the `sgconfig.yaml` configuration file. See the [custom language guide](https://ast-grep.github.io/guide/project/project-config.html#languagecustomlanguage) for details.
+You can extend language support with custom languages in `sgconfig.yaml`.
 
 ## Troubleshooting
 
-### Common Issues
+1. `ast-grep` command not found: install ast-grep and verify it is in `PATH`.
+2. No matches for complex relational rules: add `stopBy: end`.
+3. Unexpected parse/match behavior: use `dump_syntax_tree` to inspect CST/pattern representation.
+4. Config path errors: ensure `--config` or `AST_GREP_CONFIG` points to an existing file.
 
-1. **"Command not found" errors**: Ensure ast-grep is installed and in your PATH
-2. **No matches found**: Try adding `stopBy: end` to relational rules
-3. **Pattern not matching**: Use `dump_syntax_tree` to understand the AST structure
-4. **Permission errors**: Ensure the server has read access to target directories
+## License
 
-## Contributing
-
-Issues and pull requests are welcome!
-
-## Related Projects
-
-- [ast-grep](https://ast-grep.github.io/) - The core structural search tool
-- [Model Context Protocol](https://modelcontextprotocol.io/) - The protocol this server implements
-- [Codemod MCP](https://docs.codemod.com/model-context-protocol) - Gives AI assistants tools like tree-sitter AST and node types, ast-grep instructions (YAML and JS ast-grep), and Codemod CLI commands to easily build, publish, and run ast-grep based codemods.
+MIT. See [LICENSE](LICENSE).
