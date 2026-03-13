@@ -53,6 +53,9 @@ This installs the executable as:
 ast-grep-mcp-server
 ```
 
+On Linux/macOS, Cargo installs binaries to `~/.cargo/bin` by default.
+Make sure that directory is in your `PATH`.
+
 ### Option 2: Download a prebuilt binary from GitHub Releases
 
 1. Open the Releases page: <https://github.com/GodSpeedAI/ast-grep-mcp-rs/releases>
@@ -74,32 +77,30 @@ Checksum verification example:
 sha256sum -c SHA256SUMS.txt
 ```
 
-## Build
+## Quick Start (Installed Binary)
+
+1. Install ast-grep CLI and this server.
+2. Verify `ast-grep-mcp-server` runs from your shell.
+3. Configure your MCP client to launch `ast-grep-mcp-server`.
+
+Quick verification command:
 
 ```bash
-git clone https://github.com/GodSpeedAI/ast-grep-mcp-rs.git
-cd ast-grep-mcp-rs
-cargo build --release
+ast-grep-mcp-server --help
 ```
 
-Binary path:
-
-```text
-target/release/ast-grep-mcp-server
-```
-
-## Run Locally
+## Run
 
 Default transport is stdio:
 
 ```bash
-cargo run --release
+ast-grep-mcp-server
 ```
 
 With custom ast-grep config:
 
 ```bash
-cargo run --release -- --config /absolute/path/to/sgconfig.yaml
+ast-grep-mcp-server --config /absolute/path/to/sgconfig.yaml
 ```
 
 You can also set:
@@ -117,6 +118,8 @@ If you run with `--transport sse`, the server exits with an error telling you to
 
 ## Client Configuration
 
+If you installed via `cargo install ast-grep-mcp` or from GitHub Releases, use command name `ast-grep-mcp-server` directly.
+
 ### Cursor
 
 Add to your MCP settings:
@@ -125,7 +128,7 @@ Add to your MCP settings:
 {
   "mcpServers": {
     "ast-grep": {
-      "command": "/absolute/path/to/ast-grep-mcp-rs/target/release/ast-grep-mcp-server",
+      "command": "ast-grep-mcp-server",
       "args": [],
       "env": {}
     }
@@ -141,7 +144,7 @@ Add to your Claude Desktop MCP config:
 {
   "mcpServers": {
     "ast-grep": {
-      "command": "/absolute/path/to/ast-grep-mcp-rs/target/release/ast-grep-mcp-server",
+      "command": "ast-grep-mcp-server",
       "args": [],
       "env": {}
     }
@@ -169,43 +172,9 @@ Add to your Claude Desktop MCP config:
 - Test this ast-grep YAML rule against a code snippet.
 - Dump the CST for this TypeScript snippet.
 
-## Development
+## Contributing
 
-Run tests:
-
-```bash
-cargo test
-```
-
-Notes:
-
-- Integration tests are skipped automatically when `ast-grep` is not installed.
-
-## Publishing
-
-This repository includes a GitHub Actions workflow that runs on tags like `v0.1.0`.
-
-On each tag, it:
-
-1. Builds platform binaries and uploads them to the GitHub Release.
-2. Generates `SHA256SUMS.txt` for release assets.
-3. Publishes the crate to crates.io.
-
-Setup steps (one time):
-
-1. Create a crates.io API token.
-2. Add it to the repository secrets as `CARGO_REGISTRY_TOKEN`.
-
-Release steps:
-
-1. Bump `version` in `Cargo.toml`.
-2. Commit and push.
-3. Create and push a version tag:
-
-```bash
-git tag v0.1.0
-git push origin v0.1.0
-```
+Contributor and release-maintainer instructions are in [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Supported Languages
 
