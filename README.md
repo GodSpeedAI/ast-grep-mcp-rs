@@ -23,13 +23,17 @@ The server exposes four MCP tools:
 
 ## Requirements
 
-1. Install ast-grep CLI (must be available in your `PATH`)
+1. Install the `ast-grep` CLI (must be available in your `PATH`)
 
 ```bash
 # Choose one installation method from ast-grep docs
 brew install ast-grep
 cargo install ast-grep --locked
 ```
+
+This project does **not** bundle the `ast-grep` CLI. The MCP server binary
+starts successfully only if the separate `ast-grep` command is also available in
+`PATH`.
 
 1. Install Rust toolchain
 
@@ -56,6 +60,14 @@ ast-grep-mcp-server
 On Linux/macOS, Cargo installs binaries to `~/.cargo/bin` by default.
 Make sure that directory is in your `PATH`.
 
+If you are using this from VS Code or another GUI MCP client, prefer using an
+absolute binary path if the client does not inherit your shell `PATH`. For
+example:
+
+```text
+~/.cargo/bin/ast-grep-mcp-server
+```
+
 ### Option 2: Download a prebuilt binary from GitHub Releases
 
 1. Open the Releases page: <https://github.com/GodSpeedAI/ast-grep-mcp-rs/releases>
@@ -79,15 +91,21 @@ sha256sum -c SHA256SUMS.txt
 
 ## Quick Start (Installed Binary)
 
-1. Install ast-grep CLI and this server.
-2. Verify `ast-grep-mcp-server` runs from your shell.
-3. Configure your MCP client to launch `ast-grep-mcp-server`.
+1. Install the `ast-grep` CLI.
+2. Install this server binary.
+3. Verify **both** commands run from your shell.
+4. Configure your MCP client to launch `ast-grep-mcp-server`.
 
-Quick verification command:
+Quick verification commands:
 
 ```bash
+ast-grep --version
 ast-grep-mcp-server --help
 ```
+
+If `ast-grep-mcp-server` works but `ast-grep` does not, MCP startup might
+succeed while tool calls fail later when the server tries to run `ast-grep run`
+or `ast-grep scan`.
 
 ## Run
 
@@ -154,12 +172,14 @@ Add to your Claude Desktop MCP config:
 
 ### VS Code
 
-Add to your VS Code MCP configuration:
+Add to your VS Code MCP configuration (`.vscode/mcp.json` in a workspace, or
+the user/profile `mcp.json` opened via `MCP: Open User Configuration`):
 
 ```json
 {
-  "mcpServers": {
+  "servers": {
     "ast-grep": {
+      "type": "stdio",
       "command": "ast-grep-mcp-server",
       "args": [],
       "env": {}
@@ -168,11 +188,24 @@ Add to your VS Code MCP configuration:
 }
 ```
 
-Common VS Code user settings locations:
+If VS Code does not inherit your shell `PATH`, use an absolute path instead:
 
-- Linux: `~/.config/Code/User/settings.json`
-- macOS: `~/Library/Application Support/Code/User/settings.json`
-- Windows: `%APPDATA%\\Code\\User\\settings.json`
+```json
+{
+  "servers": {
+    "ast-grep": {
+      "type": "stdio",
+      "command": "${env:HOME}/.cargo/bin/ast-grep-mcp-server"
+    }
+  }
+}
+```
+
+Common VS Code user `mcp.json` locations:
+
+- Linux: `~/.config/Code/User/mcp.json`
+- macOS: `~/Library/Application Support/Code/User/mcp.json`
+- Windows: `%APPDATA%\\Code\\User\\mcp.json`
 
 ## CLI Options
 
